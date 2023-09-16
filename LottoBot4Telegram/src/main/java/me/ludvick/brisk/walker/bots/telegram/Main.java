@@ -7,8 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.*;
 
 public class Main {
@@ -27,16 +25,28 @@ public class Main {
                 properties.getProperty("db.url"),
                 properties.getProperty("db.username"),
                 properties.getProperty("db.password"),
-                "lotto_history");
+                properties.getProperty("db.tables.lotto.history"));
 
 
         LottoGame game1 = new LottoGame(
-                777,
-                java.sql.Date.valueOf("2023-09-13"),
-                7,
-                2,3,5,9,36,37
+                999,
+                java.sql.Date.valueOf("2023-09-16"),
+                9,
+                new Integer[]{7, 8, 9, 0, 1, 2}
         );
-        dbInteraction.saveGame(game1);
+
+//        List<LottoGame> lottoGames = new ArrayList<>();
+//        dbInteraction.saveGame(game1);
+//        lottoGames = dbInteraction.findAll();
+//        System.out.println(dbInteraction.findGameById(777));
+//        System.out.println(dbInteraction.findGameByDate("2023-09-16"));
+        dbInteraction.deleteGameById(777);
+        List<LottoGame> lottoGames = dbInteraction.findAll();
+
+        System.out.println("Lotto Games: ");
+        for (LottoGame game : lottoGames) {
+            System.out.println(game);
+        }
 
         dbInteraction.closeConnection();
 

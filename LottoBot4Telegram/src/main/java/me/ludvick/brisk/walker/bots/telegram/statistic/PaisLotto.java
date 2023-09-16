@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 
 public class PaisLotto extends FileWorkerAbs {
+
     @Override
     public String downloadFileFromURL(URL url, File outputFile) throws IOException {
         FileUtils.copyURLToFile(url, outputFile);
