@@ -5,10 +5,9 @@ import me.ludvick.brisk.walker.bots.telegram.db.service.DBBehavior;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class DBInteraction implements DBBehavior {
+public class DbLottoInteraction implements DBBehavior<LottoGame> {
     Connection connection;
     PreparedStatement prepareSave;
     PreparedStatement prepareSelectAll;
@@ -17,9 +16,9 @@ public class DBInteraction implements DBBehavior {
     PreparedStatement prepareDeleteById;
 
 
-    public DBInteraction() {}
+    public DbLottoInteraction() {}
 
-    public DBInteraction(Connection connection) {
+    public DbLottoInteraction(Connection connection) {
         this.connection = connection;
     }
 
@@ -50,7 +49,7 @@ public class DBInteraction implements DBBehavior {
     }
 
     @Override
-    public void saveGame(LottoGame lottoGame) {
+    public void save(LottoGame lottoGame) {
         try {
             prepareSave.setInt(1, lottoGame.getLottoId());
             prepareSave.setDate(2, lottoGame.getLottoDate());
@@ -87,7 +86,7 @@ public class DBInteraction implements DBBehavior {
     }
 
     @Override
-    public LottoGame findGameById(int id) {
+    public LottoGame findById(int id) {
         LottoGame lottoGame = new LottoGame();
 
         try {
@@ -109,7 +108,7 @@ public class DBInteraction implements DBBehavior {
     }
 
     @Override
-    public LottoGame findGameByDate(String gameDate) {
+    public LottoGame findByDate(String gameDate) {
         LottoGame lottoGame = new LottoGame();
 
         try {
@@ -131,7 +130,7 @@ public class DBInteraction implements DBBehavior {
     }
 
     @Override
-    public int deleteGameById(int id) {
+    public int deleteById(int id) {
         try {
             prepareDeleteById.setInt(1, id);
             System.out.println(prepareDeleteById.toString());

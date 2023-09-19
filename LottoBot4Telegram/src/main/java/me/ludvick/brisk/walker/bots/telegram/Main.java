@@ -1,7 +1,7 @@
 package me.ludvick.brisk.walker.bots.telegram;
 
 import me.ludvick.brisk.walker.bots.telegram.db.entity.LottoGame;
-import me.ludvick.brisk.walker.bots.telegram.db.init.DBInteraction;
+import me.ludvick.brisk.walker.bots.telegram.db.init.DbLottoInteraction;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class Main {
         URL paisLottoURL = new URL(properties.getProperty("pais.lotto.url"));
         File outputFile = new File(properties.getProperty("pais.lotto.output.file.path"));
 
-        DBInteraction dbInteraction = new DBInteraction();
+        DbLottoInteraction dbInteraction = new DbLottoInteraction();
         dbInteraction.initConnection(
                 properties.getProperty("db.url"),
                 properties.getProperty("db.username"),
@@ -40,13 +40,13 @@ public class Main {
 //        lottoGames = dbInteraction.findAll();
 //        System.out.println(dbInteraction.findGameById(777));
 //        System.out.println(dbInteraction.findGameByDate("2023-09-16"));
-        dbInteraction.deleteGameById(777);
-        List<LottoGame> lottoGames = dbInteraction.findAll();
-
-        System.out.println("Lotto Games: ");
-        for (LottoGame game : lottoGames) {
-            System.out.println(game);
-        }
+//        dbInteraction.deleteGameById(777);
+//        List<LottoGame> lottoGames = dbInteraction.findAll();
+//
+//        System.out.println("Lotto Games: ");
+//        for (LottoGame game : lottoGames) {
+//            System.out.println(game);
+//        }
 
         dbInteraction.closeConnection();
 
