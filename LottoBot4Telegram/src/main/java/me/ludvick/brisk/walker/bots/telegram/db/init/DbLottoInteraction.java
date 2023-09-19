@@ -25,7 +25,7 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
     public void initConnection(String url, String username, String password, String tableName) {
         try {
             connection = DriverManager.getConnection(url, username, password);
-            prepareSave = connection.prepareStatement("INSERT INTO " + tableName + " (lotto_id, lotto_date, lotto_strong_number, lotto_regular_number) values (?, ?, ?, ?);");
+            prepareSave = connection.prepareStatement("INSERT INTO " + tableName + " (lotto_id, lotto_date, lotto_strong_number, lotto_regular_numbers) values (?, ?, ?, ?);");
             prepareSelectAll = connection.prepareStatement("SELECT * FROM " + tableName + ";");
             prepareSelectById = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_id = ?;");
             prepareSelectByDate = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_date = ?;");
