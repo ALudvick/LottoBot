@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface DBBehavior<T> {
     void save(T t);
-    List<LottoGame> findAll();
-    LottoGame findById(int id);
-    LottoGame findByDate(String date);
+    List<T> findAll();
+    T findById(int id);
+    List<T> findBetweenDate(String startDate, String endDate);
     int deleteById(int id);
 }

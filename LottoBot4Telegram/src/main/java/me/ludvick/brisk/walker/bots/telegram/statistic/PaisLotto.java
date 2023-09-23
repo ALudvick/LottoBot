@@ -8,9 +8,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.chrono.ChronoLocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,7 +29,6 @@ public class PaisLotto implements FileWorker {
         List<LottoGame> lottoGameList = new ArrayList<>();
         try {
             List<String> fileLines = FileUtils.readLines(outputFile, "UTF-8");
-            // 3619,05/09/2023,02,03,05,09,36,37,3,0,0,
             Pattern pattern = Pattern.compile("[0-9]+,[0-9]{2}/[0-9]{2}/[0-9]{4},[0-9]{1,2},[0-9]{1,2},[0-9]{1,2},[0-9]{1,2},[0-9]{1,2},[0-9]{1,2},[0-9]{1,2}+");
             Matcher matcher;
 

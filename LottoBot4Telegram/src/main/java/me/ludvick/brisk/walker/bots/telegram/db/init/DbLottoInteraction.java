@@ -12,7 +12,7 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
     PreparedStatement prepareSave;
     PreparedStatement prepareSelectAll;
     PreparedStatement prepareSelectById;
-    PreparedStatement prepareSelectByDate;
+    PreparedStatement prepareSelectBetweenDate;
     PreparedStatement prepareDeleteById;
 
 
@@ -28,7 +28,7 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
             prepareSave = connection.prepareStatement("INSERT INTO " + tableName + " (lotto_id, lotto_date, lotto_strong_number, lotto_regular_numbers) values (?, ?, ?, ?);");
             prepareSelectAll = connection.prepareStatement("SELECT * FROM " + tableName + ";");
             prepareSelectById = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_id = ?;");
-            prepareSelectByDate = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_date = ?;");
+            prepareSelectBetweenDate = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_date <= ? AND lotto_date >= ?;");
             prepareDeleteById = connection.prepareStatement("DELETE FROM " + tableName + " WHERE lotto_id = ?;");
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -41,7 +41,7 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
             prepareSave.close();
             prepareSelectAll.close();
             prepareSelectById.close();
-            prepareSelectByDate.close();
+            prepareSelectBetweenDate.close();
             prepareDeleteById.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -87,7 +87,7 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
 
     @Override
     public LottoGame findById(int id) {
-        LottoGame lottoGame = new LottoGame();
+        LottoGame lottoGame = null;
 
         try {
             prepareSelectById.setInt(1, id);
@@ -95,10 +95,11 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
             ResultSet rs = prepareSelectById.executeQuery();
 
             while (rs.next()) {
-                lottoGame.setLottoId(rs.getInt(1));
-                lottoGame.setLottoDate(rs.getDate(2));
-                lottoGame.setLottoStrongNumber(rs.getInt(3));
-                lottoGame.setLottoRegularNumbers((Integer[]) rs.getArray(4).getArray());
+                lottoGame = new LottoGame(
+                        rs.getInt(1),
+                        rs.getDate(2),
+                        rs.getInt(3),
+                        (Integer[]) rs.getArray(4).getArray());
             }
 
         } catch (SQLException e) {
@@ -108,25 +109,28 @@ public class DbLottoInteraction implements DBBehavior<LottoGame> {
     }
 
     @Override
-    public LottoGame findByDate(String gameDate) {
-        LottoGame lottoGame = new LottoGame();
+    public List<LottoGame> findBetweenDate(String gameStartDate, String gameEndDate) {
+        List<LottoGame> lottoGames = new ArrayList<>();
 
         try {
-            prepareSelectByDate.setDate(1, java.sql.Date.valueOf(gameDate));
-            System.out.println(prepareSelectByDate.toString());
-            ResultSet rs = prepareSelectByDate.executeQuery();
+            prepareSelectBetweenDate.setDate(1, java.sql.Date.valueOf(gameStartDate));
+            prepareSelectBetweenDate.setDate(2, java.sql.Date.valueOf(gameEndDate));
+            System.out.println(prepareSelectBetweenDate.toString());
+            ResultSet rs = prepareSelectBetweenDate.executeQuery();
 
             while (rs.next()) {
-                lottoGame.setLottoId(rs.getInt(1));
-                lottoGame.setLottoDate(rs.getDate(2));
-                lottoGame.setLottoStrongNumber(rs.getInt(3));
-                lottoGame.setLottoRegularNumbers((Integer[]) rs.getArray(4).getArray());
+                lottoGames.add(new LottoGame(
+                        rs.getInt(1),
+                        rs.getDate(2),
+                        rs.getInt(3),
+                        (Integer[]) rs.getArray(4).getArray()));
             }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return lottoGame;
+
+        return lottoGames;
     }
 
     @Override
