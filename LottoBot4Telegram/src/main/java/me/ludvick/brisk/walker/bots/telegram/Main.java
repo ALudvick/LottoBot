@@ -1,45 +1,28 @@
 package me.ludvick.brisk.walker.bots.telegram;
 
-import me.ludvick.brisk.walker.bots.telegram.db.entity.LottoGame;
-import me.ludvick.brisk.walker.bots.telegram.db.init.DbLottoInteraction;
-import me.ludvick.brisk.walker.bots.telegram.statistic.PaisLotto;
+import me.ludvick.brisk.walker.bots.telegram.engine.Bot;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.*;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-
+    public static void main(String[] args) throws Exception {
         Properties properties = new Properties();
         InputStream configurationFileIS = Main.class.getClassLoader()
                 .getResourceAsStream("constants.properties");
         properties.load(configurationFileIS);
 
-        URL paisLottoURL = new URL(properties.getProperty("pais.lotto.url"));
-        File outputFile = new File(properties.getProperty("pais.lotto.output.file.path"));
+        try {
+            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+            String token = properties.getProperty("telegram.bot.token");
+            System.out.println(token);
+            botsApi.registerBot(new Bot(token));
 
-        PaisLotto lottoFile = new PaisLotto(paisLottoURL, outputFile);
-        lottoFile.downloadFileFromURL();
-        List<LottoGame> lottoGameList = lottoFile.parseLottoFile();
-
-        DbLottoInteraction dbInteraction = new DbLottoInteraction();
-        dbInteraction.initConnection(
-                properties.getProperty("db.url"),
-                properties.getProperty("db.username"),
-                properties.getProperty("db.password"),
-                properties.getProperty("db.tables.lotto.history"));
-
-        System.out.println(lottoGameList.size());
-
-        for (LottoGame lottoGame : lottoGameList) {
-            dbInteraction.save(lottoGame);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
         }
-
-        dbInteraction.closeConnection();
-
-
     }
 }

@@ -1,13 +1,12 @@
 package me.ludvick.brisk.walker.bots.telegram.db.service;
 
-import me.ludvick.brisk.walker.bots.telegram.db.entity.LottoGame;
-
 import java.util.List;
 
-public interface DBBehavior<T> {
+public interface DBBehavior<T, G> {
     void save(T t);
     List<T> findAll();
     T findById(int id);
-    List<T> findBetweenDate(String startDate, String endDate);
+    T findNewestData();
+    T findOldestData();
     int deleteById(int id);
 }

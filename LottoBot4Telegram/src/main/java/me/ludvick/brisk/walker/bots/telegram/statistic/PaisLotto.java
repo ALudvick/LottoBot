@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +45,7 @@ public class PaisLotto implements FileWorker {
                     Date tmpDate = inputDateFormat.parse(tmp[1]);
 
                     lottoGameList.add(new LottoGame(
+                            UUID.randomUUID().toString(),
                             Integer.parseInt(tmp[0]),
                             java.sql.Date.valueOf(outputDateFormat.format(tmpDate)),
                             Integer.parseInt(tmp[2]),

@@ -6,6 +6,7 @@ import java.util.Objects;
 
 public class LottoGame {
 
+    private String lotto_uuid;
     private int lottoId;
     private java.sql.Date lottoDate;
     private int lottoStrongNumber;
@@ -13,11 +14,20 @@ public class LottoGame {
 
     public LottoGame() {}
 
-    public LottoGame(int lottoId, Date lottoDate, int lottoStrongNumber, Integer[] lottoRegularNumbers) {
+    public LottoGame(String lotto_uuid, int lottoId, Date lottoDate, int lottoStrongNumber, Integer[] lottoRegularNumbers) {
+        this.lotto_uuid = lotto_uuid;
         this.lottoId = lottoId;
         this.lottoDate = lottoDate;
         this.lottoStrongNumber = lottoStrongNumber;
         this.lottoRegularNumbers = lottoRegularNumbers;
+    }
+
+    public String getLotto_uuid() {
+        return lotto_uuid;
+    }
+
+    public void setLotto_uuid(String lotto_uuid) {
+        this.lotto_uuid = lotto_uuid;
     }
 
     public int getLottoId() {
@@ -57,12 +67,12 @@ public class LottoGame {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LottoGame lottoGame = (LottoGame) o;
-        return lottoId == lottoGame.lottoId && lottoStrongNumber == lottoGame.lottoStrongNumber && Objects.equals(lottoDate, lottoGame.lottoDate) && Arrays.equals(lottoRegularNumbers, lottoGame.lottoRegularNumbers);
+        return lottoId == lottoGame.lottoId && lottoStrongNumber == lottoGame.lottoStrongNumber && Objects.equals(lotto_uuid, lottoGame.lotto_uuid) && Objects.equals(lottoDate, lottoGame.lottoDate) && Arrays.equals(lottoRegularNumbers, lottoGame.lottoRegularNumbers);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(lottoId, lottoDate, lottoStrongNumber);
+        int result = Objects.hash(lotto_uuid, lottoId, lottoDate, lottoStrongNumber);
         result = 31 * result + Arrays.hashCode(lottoRegularNumbers);
         return result;
     }
@@ -70,7 +80,8 @@ public class LottoGame {
     @Override
     public String toString() {
         return "LottoGame{" +
-                "lottoId=" + lottoId +
+                "lotto_uuid='" + lotto_uuid + '\'' +
+                ", lottoId=" + lottoId +
                 ", lottoDate=" + lottoDate +
                 ", lottoStrongNumber=" + lottoStrongNumber +
                 ", lottoRegularNumbers=" + Arrays.toString(lottoRegularNumbers) +
