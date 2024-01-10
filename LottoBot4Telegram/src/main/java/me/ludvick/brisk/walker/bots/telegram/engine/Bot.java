@@ -3,6 +3,7 @@ package me.ludvick.brisk.walker.bots.telegram.engine;
 import me.ludvick.brisk.walker.bots.telegram.Main;
 import me.ludvick.brisk.walker.bots.telegram.constants.Condition;
 import me.ludvick.brisk.walker.bots.telegram.constants.Language;
+import me.ludvick.brisk.walker.bots.telegram.db.entity.User;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
@@ -24,7 +25,7 @@ import java.util.*;
 public class Bot extends TelegramLongPollingBot {
     private Properties properties;
     private Commands commands;
-    private Text text;
+    private User user;
 
     public Bot(String botToken) {
         super(botToken);
@@ -40,18 +41,16 @@ public class Bot extends TelegramLongPollingBot {
                     properties.getProperty("db.url"),
                     properties.getProperty("db.username"),
                     properties.getProperty("db.password"),
-                    properties.getProperty("db.tables.lotto.history"));
-
-            text = new Text(
-                    properties.getProperty("db.url"),
-                    properties.getProperty("db.username"),
-                    properties.getProperty("db.password"),
-                    properties.getProperty("db.tables.lotto.text")
+                    properties.getProperty("db.tables.lotto.history"),
+                    properties.getProperty("db.tables.lotto.text"),
+                    properties.getProperty("db.tables.lotto.users")
             );
 
+            commands.initDBConnection();
             //commands.downloadNewHistoryToDB();
 
         } catch (IOException e) {
+            commands.closeDBConnection();
             throw new RuntimeException(e);
         }
     }
@@ -59,6 +58,13 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
+            user = new User(update.getMessage().getFrom().getId(),
+                    update.getMessage().getFrom().getUserName(),
+                    new java.sql.Date(new Date().getTime()),
+                    update.getMessage().getFrom().getLanguageCode()
+            );
+            commands.saveUser(user);
+
             long chatId = update.getMessage().getChatId();
             String messageText = update.getMessage().getText();
             String userLanguage =  update.getMessage().getFrom().getLanguageCode();
@@ -133,7 +139,7 @@ public class Bot extends TelegramLongPollingBot {
         try {
             execute(SendMessage.builder()
                     .chatId(chatId)
-                    .text(text.getTextFromDB(Condition.MAIN_MENU.name(), Language.ENG.name()))
+                    .text(commands.getTextFromDB(Condition.MAIN_MENU.name(), Language.ENG.name()))
                     .replyMarkup(getMainMenuInlineKeyboard())
                     .build());
         } catch (TelegramApiException e) {
@@ -144,7 +150,7 @@ public class Bot extends TelegramLongPollingBot {
     public void sendHelpMessage(long chatId, Language language) {
         sendAction(chatId, ActionType.TYPING);
 
-        String message = text.getTextFromDB(Condition.GREETING.name(), language.name());
+        String message = commands.getTextFromDB(Condition.GREETING.name(), language.name());
 
         try {
             execute(SendMessage.builder()
@@ -160,7 +166,7 @@ public class Bot extends TelegramLongPollingBot {
     public void sendErrorMessage(long chatId, Language language) {
         sendAction(chatId, ActionType.TYPING);
 
-        String message = text.getTextFromDB(Condition.ERROR.name(), language.name());
+        String message = commands.getTextFromDB(Condition.ERROR.name(), language.name());
 
         try {
             execute(SendMessage.builder()
@@ -180,7 +186,7 @@ public class Bot extends TelegramLongPollingBot {
             String endDate = convertDateFormat(dates[1]);
 
             sendAction(chatId, ActionType.TYPING);
-            List<String> messages = getTopOrLastMessage("top", 10, endDate, startDate);
+            List<String> messages = getTopOrLastMessage("top", 6, endDate, startDate);
             System.out.println(messages);
 
             for (String message : messages) {
@@ -243,7 +249,7 @@ public class Bot extends TelegramLongPollingBot {
             editMessageWithSubMenu(chatId, messageId, data);
         } else if ("back".equals(data)) {
             editMessageWithMainMenu(chatId, messageId);
-        } else if (data.contains("top;10") || data.contains("last;10")) {
+        } else if (data.contains("top;6") || data.contains("last;6")) {
             String[] userCases = data.split(";");
             System.out.println(userCases[0]);
 
@@ -306,7 +312,7 @@ public class Bot extends TelegramLongPollingBot {
             Map<Integer, Integer> strongResultMap = commands.getStatStrongMapBetweenDates(endDate, startDate);
             resultMessages.add(greetingStrong + "`" + commands.getLastFromMap(positions, strongResultMap) + "`");
 
-            Map<Integer, Integer> numberResultMap = commands.getStatNumbersMapBetweenDates(startDate, endDate);
+            Map<Integer, Integer> numberResultMap = commands.getStatNumbersMapBetweenDates(endDate, startDate);
             String greetingNumbers = "Below are statistics on LAST regular numbers: \n";
             resultMessages.add(greetingNumbers + "`" + commands.getLastFromMap(positions, numberResultMap) + "`");
         }
@@ -320,7 +326,7 @@ public class Bot extends TelegramLongPollingBot {
         EditMessageText editMessageText = EditMessageText.builder()
                 .chatId(chatId)
                 .messageId((int) messageId)
-                .text(text.getTextFromDB(Condition.MAIN_MENU.name(), Language.ENG.name()))
+                .text(commands.getTextFromDB(Condition.MAIN_MENU.name(), Language.ENG.name()))
                 .replyMarkup(getMainMenuInlineKeyboard()) // Replace with your updated main menu inline keyboard
                 .build();
 
@@ -335,7 +341,7 @@ public class Bot extends TelegramLongPollingBot {
         EditMessageText editMessageText = EditMessageText.builder()
                 .chatId(chatId)
                 .messageId((int) messageId)
-                .text(text.getTextFromDB(Condition.SUB_MENU.name(), Language.ENG.name()))
+                .text(commands.getTextFromDB(Condition.SUB_MENU.name(), Language.ENG.name()))
                 .replyMarkup(getSubMenuInlineKeyboard(data)) // Replace with your updated main menu inline keyboard
                 .build();
 
@@ -388,14 +394,14 @@ public class Bot extends TelegramLongPollingBot {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
 
         InlineKeyboardButton topButton = new InlineKeyboardButton();
-        topButton.setText("Top 10");
+        topButton.setText("Top 6");
         //lastGameButton.setCallbackData(commands.getNewestGameDate());
-        topButton.setCallbackData(mainChoose + ";top;10");
+        topButton.setCallbackData(mainChoose + ";top;6");
 
         InlineKeyboardButton lastButton = new InlineKeyboardButton();
-        lastButton.setText("Last 10");
+        lastButton.setText("Last 6");
         //monthGameButton.setCallbackData(LocalDate.parse(commands.getNewestGameDate()).minusMonths(1).toString());
-        lastButton.setCallbackData(mainChoose + ";last;10");
+        lastButton.setCallbackData(mainChoose + ";last;6");
 
         InlineKeyboardButton backButton = new InlineKeyboardButton();
         backButton.setText("<< Back");

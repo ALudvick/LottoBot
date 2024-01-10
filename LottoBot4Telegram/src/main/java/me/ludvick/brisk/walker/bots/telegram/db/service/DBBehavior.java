@@ -5,8 +5,8 @@ import java.util.List;
 public interface DBBehavior<T, G> {
     void save(T t);
     List<T> findAll();
-    T findById(int id);
+    T findById(G id);
     T findNewestData();
     T findOldestData();
-    int deleteById(int id);
+    G deleteById(G id);
 }

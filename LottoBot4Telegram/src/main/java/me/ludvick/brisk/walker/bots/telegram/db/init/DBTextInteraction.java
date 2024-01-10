@@ -5,7 +5,7 @@ import me.ludvick.brisk.walker.bots.telegram.db.service.DBBehavior;
 import java.sql.*;
 import java.util.List;
 
-public class DBTextInteraction implements DBBehavior {
+public class DBTextInteraction implements DBBehavior<String, Long> {
     Connection connection;
     PreparedStatement prepareSelectText;
 
@@ -35,7 +35,7 @@ public class DBTextInteraction implements DBBehavior {
     }
 
     @Override
-    public void save(Object o) {
+    public void save(String str) {
 
     }
 
@@ -45,23 +45,23 @@ public class DBTextInteraction implements DBBehavior {
     }
 
     @Override
-    public Object findById(int id) {
+    public String findById(Long id) {
         return null;
     }
 
     @Override
-    public Object findNewestData() {
+    public String findNewestData() {
         return null;
     }
 
     @Override
-    public Object findOldestData() {
+    public String findOldestData() {
         return null;
     }
 
     @Override
-    public int deleteById(int id) {
-        return 0;
+    public Long deleteById(Long id) {
+        return 0L;
     }
 
     public String getCurrentTextByLang(String condition, String language) {

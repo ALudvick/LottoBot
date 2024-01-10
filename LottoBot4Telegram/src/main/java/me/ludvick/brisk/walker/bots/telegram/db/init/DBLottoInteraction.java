@@ -7,7 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DBLottoInteraction implements DBBehavior<LottoGame, String> {
+public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
     Connection connection;
     PreparedStatement prepareSave;
     PreparedStatement prepareSelectAll;
@@ -98,11 +98,11 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, String> {
     }
 
     @Override
-    public LottoGame findById(int id) {
+    public LottoGame findById(Long id) {
         LottoGame lottoGame = null;
 
         try {
-            prepareSelectById.setInt(1, id);
+            prepareSelectById.setLong(1, id);
             System.out.println(prepareSelectById.toString());
             ResultSet rs = prepareSelectById.executeQuery();
 
@@ -216,9 +216,9 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, String> {
     }
 
     @Override
-    public int deleteById(int id) {
+    public Long deleteById(Long id) {
         try {
-            prepareDeleteById.setInt(1, id);
+            prepareDeleteById.setLong(1, id);
             System.out.println(prepareDeleteById.toString());
             prepareDeleteById.execute();
         } catch (SQLException e) {

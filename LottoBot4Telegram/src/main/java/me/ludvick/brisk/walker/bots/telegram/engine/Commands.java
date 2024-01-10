@@ -1,7 +1,10 @@
 package me.ludvick.brisk.walker.bots.telegram.engine;
 
 import me.ludvick.brisk.walker.bots.telegram.db.entity.LottoGame;
+import me.ludvick.brisk.walker.bots.telegram.db.entity.User;
 import me.ludvick.brisk.walker.bots.telegram.db.init.DBLottoInteraction;
+import me.ludvick.brisk.walker.bots.telegram.db.init.DBTextInteraction;
+import me.ludvick.brisk.walker.bots.telegram.db.init.DBUserInteraction;
 import me.ludvick.brisk.walker.bots.telegram.statistic.PaisLotto;
 
 import java.io.File;
@@ -15,30 +18,57 @@ public class Commands {
     private String paisLottoURL;
     private String outputFile;
     private DBLottoInteraction dbLottoInteraction;
+    private DBTextInteraction dbTextInteraction;
+    private DBUserInteraction dbUserInteraction;
     private String dbURL;
     private String dbUsername;
     private String dbPassword;
-    private String dbInstance;
+    private String dbLottoInstance;
+    private String dbTextInstance;
+    private String dbUserInstance;
 
     public Commands() {
     }
 
-    public Commands(String paisLottoURL, String outputFile, String dbURL, String dbUsername, String dbPassword, String dbInstance) {
+    public Commands(String paisLottoURL, String outputFile, String dbURL, String dbUsername, String dbPassword, String dbLottoInstance, String dbTextInstance, String dbUserInstance) {
         this.paisLottoURL = paisLottoURL;
         this.outputFile = outputFile;
         this.dbURL = dbURL;
         this.dbUsername = dbUsername;
         this.dbPassword = dbPassword;
-        this.dbInstance = dbInstance;
+        this.dbLottoInstance = dbLottoInstance;
+        this.dbTextInstance = dbTextInstance;
+        this.dbUserInstance = dbUserInstance;
     }
 
-    private void initDBConnection() {
+    public void initDBConnection() {
         dbLottoInteraction = new DBLottoInteraction();
-        dbLottoInteraction.initConnection(dbURL, dbUsername, dbPassword, dbInstance);
+        dbLottoInteraction.initConnection(dbURL, dbUsername, dbPassword, dbLottoInstance);
+        dbTextInteraction = new DBTextInteraction();
+        dbTextInteraction.initConnection(dbURL, dbUsername, dbPassword, dbTextInstance);
+        dbUserInteraction = new DBUserInteraction();
+        dbUserInteraction.initConnection(dbURL, dbUsername, dbPassword, dbUserInstance);
     }
 
-    private void closeDBConnection() {
+    private void initDBLottoConnection() {
+        dbLottoInteraction = new DBLottoInteraction();
+        dbLottoInteraction.initConnection(dbURL, dbUsername, dbPassword, dbLottoInstance);
+    }
+
+    private void initDBTextConnection() {
+        dbTextInteraction = new DBTextInteraction();
+        dbTextInteraction.initConnection(dbURL, dbUsername, dbPassword, dbTextInstance);
+    }
+
+    private void initDBUserConnection() {
+        dbUserInteraction = new DBUserInteraction();
+        dbUserInteraction.initConnection(dbURL, dbUsername, dbPassword, dbUserInstance);
+    }
+
+    public void closeDBConnection() {
         dbLottoInteraction.closeConnection();
+        dbTextInteraction.closeConnection();
+        dbUserInteraction.closeConnection();
     }
 
     public void downloadNewHistoryToDB() throws MalformedURLException {
@@ -47,7 +77,6 @@ public class Commands {
         List<LottoGame> lottoGameList = lottoFile.parseLottoFile();
         System.out.println(lottoGameList.size());
 
-        initDBConnection();
         for (LottoGame lottoGame : lottoGameList) {
             if (dbLottoInteraction.findCurrentData(lottoGame.getLottoDate().toString()) == null) {
                 dbLottoInteraction.save(lottoGame);
@@ -56,38 +85,29 @@ public class Commands {
                 break;
             }
         }
-        closeDBConnection();
     }
 
     public String getNewestGameDate() {
-        initDBConnection();
         LottoGame lottoGame = dbLottoInteraction.findNewestData();
-        closeDBConnection();
         return lottoGame.getLottoDate().toString();
     }
 
     public String getNewestGameData() {
-        initDBConnection();
         LottoGame lottoGame = dbLottoInteraction.findNewestData();
         String result = String.format("Date of the last lotto: `%s` \nStrong number: `%d` \nWinner numbers: `%s`",
                 new SimpleDateFormat("dd/MM/yyyy").format(lottoGame.getLottoDate()),
                 lottoGame.getLottoStrongNumber(),
                 Arrays.toString(lottoGame.getLottoRegularNumbers()).replace("[", "").replace("]", "")
         );
-        closeDBConnection();
         return result;
     }
 
     public String getOldestGameDate() {
-        initDBConnection();
         LottoGame lottoGame = dbLottoInteraction.findOldestData();
-        closeDBConnection();
         return lottoGame.getLottoDate().toString();
     }
 
     public Map<Integer, Integer> getStatStrongMapBetweenDates(String startDate, String endDate) {
-        initDBConnection();
-
         List<LottoGame> lottoGameList = dbLottoInteraction.findBetweenDate(startDate, endDate);
         Map<Integer, Integer> statisticMap = new HashMap<>();
 
@@ -105,14 +125,10 @@ public class Commands {
                 statisticMap.put(lottoGame.getLottoStrongNumber(), 1);
             }
         }
-
-        closeDBConnection();
         return statisticMap;
     }
 
     public Map<Integer, Integer> getStatNumbersMapBetweenDates(String startDate, String endDate) {
-        initDBConnection();
-
         List<LottoGame> lottoGameList = dbLottoInteraction.findBetweenDate(startDate, endDate);
         Map<Integer, Integer> statisticMap = new HashMap<>();
         for (LottoGame lottoGame : lottoGameList) {
@@ -124,8 +140,6 @@ public class Commands {
                 }
             }
         }
-
-        closeDBConnection();
         return statisticMap;
     }
 
@@ -199,5 +213,16 @@ public class Commands {
         System.out.println(resultBuilder.toString());
 
         return resultBuilder.toString();
+    }
+
+    public String getTextFromDB(String condition, String language) {
+        String result = dbTextInteraction.getCurrentTextByLang(condition, language);
+        return result;
+    }
+
+    public void saveUser(User user) {
+        if(dbUserInteraction.findById(user.getId()) == null) {
+            dbUserInteraction.save(user);
+        }
     }
 }
