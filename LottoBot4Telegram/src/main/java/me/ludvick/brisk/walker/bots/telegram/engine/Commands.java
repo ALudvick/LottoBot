@@ -1,11 +1,15 @@
 package me.ludvick.brisk.walker.bots.telegram.engine;
 
+import me.ludvick.brisk.walker.bots.telegram.constants.Condition;
+import me.ludvick.brisk.walker.bots.telegram.constants.Language;
 import me.ludvick.brisk.walker.bots.telegram.db.entity.LottoGame;
 import me.ludvick.brisk.walker.bots.telegram.db.entity.User;
 import me.ludvick.brisk.walker.bots.telegram.db.init.DBLottoInteraction;
 import me.ludvick.brisk.walker.bots.telegram.db.init.DBTextInteraction;
 import me.ludvick.brisk.walker.bots.telegram.db.init.DBUserInteraction;
 import me.ludvick.brisk.walker.bots.telegram.statistic.PaisLotto;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -15,6 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Commands {
+    private static final Logger logger = LogManager.getLogger(Commands.class.getName());
     private String paisLottoURL;
     private String outputFile;
     private DBLottoInteraction dbLottoInteraction;
@@ -81,7 +86,7 @@ public class Commands {
             if (dbLottoInteraction.findCurrentData(lottoGame.getLottoDate().toString()) == null) {
                 dbLottoInteraction.save(lottoGame);
             } else {
-                System.out.println("LOTTO_ID " + lottoGame.getLottoId() + " EXIST!");
+                logger.info("lottoId {} exist! Break the process!", lottoGame.getLottoId());
                 break;
             }
         }
@@ -92,9 +97,9 @@ public class Commands {
         return lottoGame.getLottoDate().toString();
     }
 
-    public String getNewestGameData() {
+    public String getNewestGameData(Language language) {
         LottoGame lottoGame = dbLottoInteraction.findNewestData();
-        String result = String.format("Date of the last lotto: `%s` \nStrong number: `%d` \nWinner numbers: `%s`",
+        String result = String.format(getTextFromDB(Condition.LAST_GAME_RESULT.name(), language.name()),
                 new SimpleDateFormat("dd/MM/yyyy").format(lottoGame.getLottoDate()),
                 lottoGame.getLottoStrongNumber(),
                 Arrays.toString(lottoGame.getLottoRegularNumbers()).replace("[", "").replace("]", "")
@@ -111,15 +116,10 @@ public class Commands {
         List<LottoGame> lottoGameList = dbLottoInteraction.findBetweenDate(startDate, endDate);
         Map<Integer, Integer> statisticMap = new HashMap<>();
 
-        System.out.println("TEST MAP METHOD:");
         for (LottoGame lottoGame : lottoGameList) {
-            System.out.println("------>" + statisticMap);
-            System.out.println("------>" + lottoGame.getLottoStrongNumber());
-            System.out.println("------>" + statisticMap.containsKey(lottoGame.getLottoStrongNumber()));
+            logger.debug("Map: {}; Number: {}, Checker: {}", statisticMap, lottoGame.getLottoStrongNumber(), statisticMap.containsKey(lottoGame.getLottoStrongNumber()));
 
             if (statisticMap.containsKey(lottoGame.getLottoStrongNumber())) {
-                System.out.println("TRUE!!!");
-                System.out.println(statisticMap.get(lottoGame.getLottoStrongNumber()).intValue());
                 statisticMap.put(lottoGame.getLottoStrongNumber(), statisticMap.get(lottoGame.getLottoStrongNumber()) + 1);
             } else {
                 statisticMap.put(lottoGame.getLottoStrongNumber(), 1);
@@ -153,8 +153,8 @@ public class Commands {
         return resultSum;
     }
 
-    public String getTopFromMap(int topPositions, Map<Integer, Integer> numbersMap) {
-        System.out.println(numbersMap);
+    public String getTopFromMap(int topPositions, Map<Integer, Integer> numbersMap, Language language) {
+        logger.debug("getTopFromMap {}", numbersMap);
 
         Map<Integer, Integer> topNumbers = numbersMap.entrySet().stream()
                         .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -168,26 +168,19 @@ public class Commands {
             Integer key = entry.getKey();
             Double percent = ((double) entry.getValue() / (double) getAllNumbersSum(numbersMap)) * 100f;
 
-            System.out.println(value + " - " + key + " (" + percent + "%)");
-            /*
-            String str = String.format("%d was among the winning numbers %d times (%.2f%%)!\n",
-                    key,
-                    value,
-                    percent);
-             */
-            String str = String.format("Number %d was winning %d times (%.2f%%)\n",
+            logger.debug("Value: {}, Key: {}, Percent: {}", value, key, percent);
+
+            String str = String.format(getTextFromDB(Condition.NUMBERS_RESULT.name(), language.name()),
                     key,
                     value,
                     percent);
             resultBuilder.append(str);
         }
 
-        System.out.println(resultBuilder.toString());
-
         return resultBuilder.toString();
     }
 
-    public String getLastFromMap(int topPositions, Map<Integer, Integer> numbersMap) {
+    public String getLastFromMap(int topPositions, Map<Integer, Integer> numbersMap, Language language) {
         System.out.println(numbersMap);
 
         Map<Integer, Integer> topNumbers = numbersMap.entrySet().stream()
@@ -203,7 +196,7 @@ public class Commands {
             Double percent = ((double) entry.getValue() / (double) getAllNumbersSum(numbersMap)) * 100f;
 
             System.out.println(value + " - " + key + " (" + percent + "%)");
-            String str = String.format("%d was among the winning numbers %d times (%.2f%%)!\n",
+            String str = String.format(getTextFromDB(Condition.NUMBERS_RESULT.name(), language.name()),
                     key,
                     value,
                     percent);
