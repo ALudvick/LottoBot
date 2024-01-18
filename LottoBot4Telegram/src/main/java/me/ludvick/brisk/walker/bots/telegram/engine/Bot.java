@@ -23,6 +23,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -262,7 +265,7 @@ public class Bot extends TelegramLongPollingBot {
             String endDate = convertDateFormat(dates[1]);
 
             sendAction(chatId, ActionType.TYPING);
-            List<String> messages = getTopOrLastMessage("top", 6, endDate, startDate, language);
+            List<String> messages = getTopOrLastMessage("top", 6, endDate, startDate, language, String.valueOf(chatId));
             logger.info("Messages: {}", messages);
 
             for (String message : messages) {
@@ -345,8 +348,12 @@ public class Bot extends TelegramLongPollingBot {
                     break;
             }
 
-            List<String> messages = getTopOrLastMessage(userCases[1], Integer.parseInt(userCases[2]), startDate, endDate, language);
+            List<String> messages = getTopOrLastMessage(userCases[1], Integer.parseInt(userCases[2]), startDate, endDate, language, String.valueOf(chatId));
             logger.info("Messages list was created ");
+
+            File userFolder = new File(String.valueOf(chatId));
+            File[] files = userFolder.listFiles();
+            int i = 0;
 
             for (String message : messages) {
                 try {
@@ -355,12 +362,15 @@ public class Bot extends TelegramLongPollingBot {
 //                            .parseMode("Markdown")
 //                            .text(message)
 //                            .build());
-                    execute(SendPhoto.builder()
-                            .chatId(chatId)
-                            .parseMode("Markdown")
-                            .photo(new InputFile(new File("strong.jpeg")))
-                            .caption(message)
-                            .build());
+                    if (files != null) {
+                        execute(SendPhoto.builder()
+                                .chatId(chatId)
+                                .parseMode("Markdown")
+                                .photo(new InputFile(files[i]))
+                                .caption(message)
+                                .build());
+                        i++;
+                    }
                     logger.info("Message: {}", message.replace("\n", " "));
                 } catch (TelegramApiException e) {
                     logger.error(e.getMessage());
@@ -371,21 +381,27 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     // Generator of Top or Last messages
-    private List<String> getTopOrLastMessage(String condition, int positions, String startDate, String endDate, Language language) {
+    private List<String> getTopOrLastMessage(String condition, int positions, String startDate, String endDate, Language language, String folderName) {
         List<String> resultMessages = new ArrayList<>();
         logger.info("Condition: {}; Positions: {}; StartDate: {}; EndDate: {}", condition, positions, startDate, endDate);
+
+        try {
+            Files.createDirectory(Paths.get(folderName));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         if (condition.contains("top")) {
             logger.info("Condition equals \"top\"");
             String greetingStrong = commands.getTextFromDB(Condition.TOP_STRONG.name(), language.name());
             Map<Integer, Integer> strongResultMap = commands.getStatStrongMapBetweenDates(endDate, startDate);
             resultMessages.add(greetingStrong + "`" + commands.getTopFromMap(positions, strongResultMap, language) + "`");
-            commands.getBarChart(strongResultMap, "strong.jpeg", "Strong numbers");
+            commands.getBarChart(strongResultMap, folderName + "/01strong.jpeg", "Strong numbers");
 
             Map<Integer, Integer> numberResultMap = commands.getStatNumbersMapBetweenDates(endDate, startDate);
             String greetingNumbers = commands.getTextFromDB(Condition.TOP_REGULAR.name(), language.name());
             resultMessages.add(greetingNumbers + "`" + commands.getTopFromMap(positions, numberResultMap, language) + "`");
-            commands.getBarChart(numberResultMap, "regular.jpeg", "Regular numbers");
+            commands.getBarChart(numberResultMap, folderName + "/02regular.jpeg", "Regular numbers");
         } else if (condition.contains("last")) {
             String greetingStrong =  commands.getTextFromDB(Condition.LAST_STRONG.name(), language.name());
             Map<Integer, Integer> strongResultMap = commands.getStatStrongMapBetweenDates(endDate, startDate);
