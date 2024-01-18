@@ -10,13 +10,16 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -61,15 +64,15 @@ public class Bot extends TelegramLongPollingBot {
             commands.initDBConnection();
 
             // Download statistic file from official web-site
-//            logger.info("Schedule executer thread...");
-//            scheduledExecute(
-//                    Integer.parseInt(properties.getProperty("bot.execute.download.delay")),
-//                    Integer.parseInt(properties.getProperty("bot.execute.download.period"))
-//            );
+            logger.info("Schedule executer thread...");
+            scheduledExecute(
+                    Integer.parseInt(properties.getProperty("bot.execute.download.delay")),
+                    Integer.parseInt(properties.getProperty("bot.execute.download.period"))
+            );
 
         } catch (IOException e) {
             logger.error(e.getMessage());
-            commands.closeDBConnection();
+            //commands.closeDBConnection();
             throw new RuntimeException(e);
         }
     }
@@ -347,10 +350,16 @@ public class Bot extends TelegramLongPollingBot {
 
             for (String message : messages) {
                 try {
-                    execute(SendMessage.builder()
+//                    execute(SendMessage.builder()
+//                            .chatId(chatId)
+//                            .parseMode("Markdown")
+//                            .text(message)
+//                            .build());
+                    execute(SendPhoto.builder()
                             .chatId(chatId)
                             .parseMode("Markdown")
-                            .text(message)
+                            .photo(new InputFile(new File("strong.jpeg")))
+                            .caption(message)
                             .build());
                     logger.info("Message: {}", message.replace("\n", " "));
                 } catch (TelegramApiException e) {
@@ -371,10 +380,12 @@ public class Bot extends TelegramLongPollingBot {
             String greetingStrong = commands.getTextFromDB(Condition.TOP_STRONG.name(), language.name());
             Map<Integer, Integer> strongResultMap = commands.getStatStrongMapBetweenDates(endDate, startDate);
             resultMessages.add(greetingStrong + "`" + commands.getTopFromMap(positions, strongResultMap, language) + "`");
+            commands.getBarChart(strongResultMap, "strong.jpeg", "Strong numbers");
 
             Map<Integer, Integer> numberResultMap = commands.getStatNumbersMapBetweenDates(endDate, startDate);
             String greetingNumbers = commands.getTextFromDB(Condition.TOP_REGULAR.name(), language.name());
             resultMessages.add(greetingNumbers + "`" + commands.getTopFromMap(positions, numberResultMap, language) + "`");
+            commands.getBarChart(numberResultMap, "regular.jpeg", "Regular numbers");
         } else if (condition.contains("last")) {
             String greetingStrong =  commands.getTextFromDB(Condition.LAST_STRONG.name(), language.name());
             Map<Integer, Integer> strongResultMap = commands.getStatStrongMapBetweenDates(endDate, startDate);

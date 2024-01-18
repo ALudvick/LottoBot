@@ -47,12 +47,15 @@ public class Commands {
     }
 
     public void initDBConnection() {
+        long startProcess = System.currentTimeMillis();
         dbLottoInteraction = new DBLottoInteraction();
         dbLottoInteraction.initConnection(dbURL, dbUsername, dbPassword, dbLottoInstance);
         dbTextInteraction = new DBTextInteraction();
         dbTextInteraction.initConnection(dbURL, dbUsername, dbPassword, dbTextInstance);
         dbUserInteraction = new DBUserInteraction();
         dbUserInteraction.initConnection(dbURL, dbUsername, dbPassword, dbUserInstance);
+        long endProcess = System.currentTimeMillis();
+        logger.info("initDBConnection: {}ms", (endProcess - startProcess));
     }
 
     private void initDBLottoConnection() {
@@ -77,10 +80,12 @@ public class Commands {
     }
 
     public void downloadNewHistoryToDB() throws MalformedURLException {
+        logger.info("Start downloading history process");
+        long startProcess = System.currentTimeMillis();
         PaisLotto lottoFile = new PaisLotto(new URL(paisLottoURL), new File(outputFile));
         lottoFile.downloadFileFromURL();
         List<LottoGame> lottoGameList = lottoFile.parseLottoFile();
-        System.out.println(lottoGameList.size());
+        logger.info("lottoGameList size: {}", lottoGameList.size());
 
         for (LottoGame lottoGame : lottoGameList) {
             if (dbLottoInteraction.findCurrentData(lottoGame.getLottoDate().toString()) == null) {
@@ -90,6 +95,8 @@ public class Commands {
                 break;
             }
         }
+        long endProcess = System.currentTimeMillis();
+        logger.info("Downloading history finished by {}ms", (endProcess - startProcess));
     }
 
     public String getNewestGameDate() {
@@ -209,13 +216,21 @@ public class Commands {
     }
 
     public String getTextFromDB(String condition, String language) {
-        String result = dbTextInteraction.getCurrentTextByLang(condition, language);
-        return result;
+        return dbTextInteraction.getCurrentTextByLang(condition, language);
     }
 
     public void saveUser(User user) {
         if(dbUserInteraction.findById(user.getId()) == null) {
             dbUserInteraction.save(user);
+            logger.info("User {} saved", user.getId());
+        } else {
+            logger.info("User already exist!");
         }
+    }
+
+    public void getBarChart(Map<Integer, Integer> data, String chartFileName, String chartTitle) {
+        logger.info("Creating chart image...");
+        ChartCreator chart = new ChartCreator(data, chartFileName, chartTitle, 2000, 500);
+        chart.saveChartAsJPEG();
     }
 }

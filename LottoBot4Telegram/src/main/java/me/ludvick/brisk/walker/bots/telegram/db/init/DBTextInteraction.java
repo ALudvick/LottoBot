@@ -17,19 +17,24 @@ public class DBTextInteraction implements DBBehavior<String, Long> {
     }
 
     public void initConnection(String url, String username, String password, String tableName) {
+        logger.info("Init DBTextInteraction...");
         try {
             connection = DriverManager.getConnection(url, username, password);
+            logger.info("Preparing statements...");
             prepareSelectText = connection.prepareStatement("SELECT text_local FROM " + tableName + " WHERE text_condition = ? AND text_language = ?;");
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
     public void closeConnection() {
+        logger.info("Close DBTextInteraction");
         try {
             connection.close();
             prepareSelectText.close();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -70,16 +75,17 @@ public class DBTextInteraction implements DBBehavior<String, Long> {
         try {
             prepareSelectText.setString(1, condition);
             prepareSelectText.setString(2, language);
-            System.out.println(prepareSelectText.toString());
+            logger.info("getCurrentTextByLang: {}", prepareSelectText.toString());
 
             ResultSet rs = prepareSelectText.executeQuery();
             while (rs.next()) {
                 result = rs.getString(1);
             }
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
-
+        logger.info("Selected text: {}", result);
         return result;
     }
 }

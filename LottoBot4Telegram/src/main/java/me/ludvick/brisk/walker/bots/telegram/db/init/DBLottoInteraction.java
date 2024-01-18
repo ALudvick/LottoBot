@@ -26,8 +26,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
     }
 
     public void initConnection(String url, String username, String password, String tableName) {
+        logger.info("Init DBLottoInteraction...");
         try {
             connection = DriverManager.getConnection(url, username, password);
+            logger.info("Preparing statements...");
             prepareSave = connection.prepareStatement("INSERT INTO " + tableName + " (lotto_uuid, lotto_id, lotto_date, lotto_strong_number, lotto_regular_numbers) values (?, ?, ?, ?, ?);");
             prepareSelectAll = connection.prepareStatement("SELECT * FROM " + tableName + ";");
             prepareSelectById = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_id = ?;");
@@ -38,11 +40,13 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             prepareSelectBetweenDate = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE lotto_date BETWEEN ? AND ?;");
             prepareDeleteById = connection.prepareStatement("DELETE FROM " + tableName + " WHERE lotto_id = ?;");
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
     public void closeConnection() {
+        logger.info("Close DBLottoInteraction");
         try {
             connection.close();
             prepareSave.close();
@@ -54,6 +58,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             prepareSelectBetweenDate.close();
             prepareDeleteById.close();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -67,9 +72,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             prepareSave.setInt(4, lottoGame.getLottoStrongNumber());
             prepareSave.setArray(5, connection.createArrayOf("INTEGER", lottoGame.getLottoRegularNumbers()));
 
-            System.out.println(prepareSave.toString());
+            logger.info("save: {}", prepareSave.toString());
             prepareSave.execute();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -79,7 +85,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
         List<LottoGame> lottoGames = new ArrayList<>();
 
         try {
-            System.out.println(prepareSelectAll.toString());
+            logger.info("findAll: {}", prepareSelectAll.toString());
             ResultSet rs = prepareSelectAll.executeQuery();
 
             while (rs.next()) {
@@ -92,8 +98,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
+        logger.info("Finding {} games", lottoGames.size());
         return lottoGames;
     }
 
@@ -103,7 +111,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
 
         try {
             prepareSelectById.setLong(1, id);
-            System.out.println(prepareSelectById.toString());
+            logger.info("findById: {}", prepareSelectById.toString());
             ResultSet rs = prepareSelectById.executeQuery();
 
             while (rs.next()) {
@@ -116,8 +124,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
+        logger.info("Find game: {}", lottoGame);
         return lottoGame;
     }
 
@@ -126,7 +136,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
         LottoGame lottoGame = null;
 
         try {
-            System.out.println(prepareSelectNewestData.toString());
+            logger.info("findNewestData: {}", prepareSelectNewestData.toString());
             ResultSet rs = prepareSelectNewestData.executeQuery();
 
             while (rs.next()) {
@@ -139,8 +149,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
+        logger.info("newest data: {}", lottoGame);
         return lottoGame;
     }
 
@@ -149,7 +161,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
         LottoGame lottoGame = null;
 
         try {
-            System.out.println(prepareSelectOldestData.toString());
+            logger.info("findOldestData: {}", prepareSelectOldestData.toString());
             ResultSet rs = prepareSelectOldestData.executeQuery();
 
             while (rs.next()) {
@@ -162,8 +174,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
+        logger.info("oldest data: {}", lottoGame);
         return lottoGame;
     }
 
@@ -172,7 +186,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
 
         try {
             prepareSelectCurrentDate.setString(1, date);
-            System.out.println(prepareSelectCurrentDate.toString());
+            logger.info("findCurrentData: {}", prepareSelectCurrentDate.toString());
             ResultSet rs = prepareSelectCurrentDate.executeQuery();
 
             while (rs.next()) {
@@ -185,8 +199,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
+        logger.info("current data: {}", lottoGame);
         return lottoGame;
     }
 
@@ -196,7 +212,7 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
         try {
             prepareSelectBetweenDate.setDate(1, java.sql.Date.valueOf(gameStartDate));
             prepareSelectBetweenDate.setDate(2, java.sql.Date.valueOf(gameEndDate));
-            System.out.println(prepareSelectBetweenDate.toString());
+            logger.info("findBetweenDate: {}", prepareSelectBetweenDate.toString());
             ResultSet rs = prepareSelectBetweenDate.executeQuery();
 
             while (rs.next()) {
@@ -209,9 +225,10 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
-
+        logger.info("data between dates: {}", lottoGames);
         return lottoGames;
     }
 
@@ -219,12 +236,13 @@ public class DBLottoInteraction implements DBBehavior<LottoGame, Long> {
     public Long deleteById(Long id) {
         try {
             prepareDeleteById.setLong(1, id);
-            System.out.println(prepareDeleteById.toString());
+            logger.info("deleteById: {}", prepareDeleteById.toString());
             prepareDeleteById.execute();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
-
+        logger.info("Id {} deleted", id);
         return id;
     }
 }

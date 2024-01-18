@@ -36,10 +36,9 @@ public class PaisLotto implements FileWorker {
             for (String line : fileLines) {
                 matcher = pattern.matcher(line);
                 if (matcher.find()) {
-                    System.out.println(matcher.group());
                     String[] tmp = matcher.group().split(",");
 
-                    System.out.println(tmp[1].replace("/", "-"));
+                    logger.debug("Matcher group: {}; Date changes: {}", matcher.group(), tmp[1].replace("/", "-"));
                     SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy");
                     SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd");
                     Date tmpDate = inputDateFormat.parse(tmp[1]);
@@ -48,31 +47,36 @@ public class PaisLotto implements FileWorker {
                             UUID.randomUUID().toString(),
                             Integer.parseInt(tmp[0]),
                             java.sql.Date.valueOf(outputDateFormat.format(tmpDate)),
-                            Integer.parseInt(tmp[2]),
+                            Integer.parseInt(tmp[8]),
                             new Integer[]{
+                                    Integer.parseInt(tmp[2]),
                                     Integer.parseInt(tmp[3]),
                                     Integer.parseInt(tmp[4]),
                                     Integer.parseInt(tmp[5]),
                                     Integer.parseInt(tmp[6]),
-                                    Integer.parseInt(tmp[7]),
-                                    Integer.parseInt(tmp[8])}
+                                    Integer.parseInt(tmp[7])}
                     ));
                 }
             }
 
         } catch (IOException | ParseException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
 
-        lottoGameList.forEach(System.out::println);
+        //lottoGameList.forEach(System.out::println);
+        logger.debug("LottoGameList size: {}", lottoGameList.size());
         return lottoGameList;
     }
 
     @Override
     public void downloadFileFromURL() {
+        logger.info("Try to download history file from site...");
         try {
             FileUtils.copyURLToFile(url, outputFile);
+            logger.info("File downloaded!");
         } catch (IOException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }

@@ -19,20 +19,25 @@ public class DBUserInteraction implements DBBehavior<User, Long> {
     }
 
     public void initConnection(String url, String username, String password, String tableName) {
+        logger.info("Init DBUserInteraction...");
         try {
             connection = DriverManager.getConnection(url, username, password);
+            logger.info("Preparing statements...");
             prepareSave = connection.prepareStatement("INSERT INTO " + tableName + "(user_id, user_nickname, user_register_date, user_language) VALUES (?, ?, ?, ?)");
             prepareFindById = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE user_id = ?");
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
     public void closeConnection() {
+        logger.info("Close DBUserInteraction");
         try {
             prepareSave.close();
             connection.close();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -45,9 +50,10 @@ public class DBUserInteraction implements DBBehavior<User, Long> {
             prepareSave.setDate(3, user.getRegisterDate());
             prepareSave.setString(4, user.getLanguage());
 
-            System.out.println(prepareSave);
+            logger.info("save user: {}", prepareSave.toString());
             prepareSave.execute();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -63,6 +69,7 @@ public class DBUserInteraction implements DBBehavior<User, Long> {
 
         try {
             prepareFindById.setLong(1, id);
+            logger.info("find user by id: {}", prepareFindById.toString());
             ResultSet rs = prepareFindById.executeQuery();
             while (rs.next()) {
                 user = new User(
@@ -74,9 +81,11 @@ public class DBUserInteraction implements DBBehavior<User, Long> {
             }
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
 
+        logger.info("user founded: {}", user);
         return user;
     }
 
